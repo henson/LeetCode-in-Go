@@ -1,28 +1,47 @@
 package problem0239
 
+// 参看 https://leetcode.com/problems/sliding-window-maximum/discuss/65881/O(n)-solution-in-Java-with-two-simple-pass-in-the-array
 func maxSlidingWindow(nums []int, k int) []int {
-	// 题目里面说好了 1 <= k 的
-	// testcase 里面还是出现了 k == 0
-	if k == 0 {
-		return nil
+	size := len(nums)
+	if k <= 1 {
+		return nums
 	}
 
-	// res 的长度是可计算的
-	res := make([]int, len(nums)-k+1)
-	for i := 0; i+k <= len(nums); i++ {
-		res[i] = maxOf(nums[i : i+k])
+	g := k - 1 // 比参考文章的分组少一个，可以减少 max 函数的调用，理论上可以加速。
+
+	left := make([]int, size)
+	for i := 0; i < size; i++ {
+		if i%g == 0 {
+			left[i] = nums[i]
+		} else {
+			left[i] = max(nums[i], left[i-1])
+		}
+	}
+
+	right := make([]int, size)
+	// size-1 很可能不是那组的最后一个，需要单独列出
+	right[size-1] = nums[size-1]
+	for j := size - 2; j >= 0; j-- {
+		if (j+1)%g == 0 {
+			right[j] = nums[j]
+		} else {
+			right[j] = max(nums[j], right[j+1])
+		}
+	}
+
+	res := make([]int, size-k+1)
+	for i := 0; i <= size-k; i++ {
+		// right[i] 中保存了 nums[i:g*(i/g+1)] 中的最大值
+		// left[i+k-1] 中保存了 nums[g*(i/g+1):i+k] 中的最大值
+		res[i] = max(right[i], left[i+k-1])
 	}
 
 	return res
 }
 
-// 获取局部的最大值
-func maxOf(nums []int) int {
-	max := nums[0]
-	for i := 1; i < len(nums); i++ {
-		if max < nums[i] {
-			max = nums[i]
-		}
+func max(a, b int) int {
+	if a > b {
+		return a
 	}
-	return max
+	return b
 }

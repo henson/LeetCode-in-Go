@@ -2,7 +2,9 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
 )
 
 func max(a, b int) int {
@@ -25,4 +27,18 @@ func read(path string) []byte {
 	return data
 }
 
-// TODO: 编写一个写方法
+func write(path, content string) {
+	err := ioutil.WriteFile(path, []byte(content), 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// 利用 VSCode 打开文件
+func vscodeOpen(filename string) {
+	cmd := exec.Command("code", "-r", filename)
+	_, err := cmd.Output()
+	if err != nil {
+		panic(err.Error())
+	}
+}

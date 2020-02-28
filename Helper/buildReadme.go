@@ -1,61 +1,70 @@
 package main
 
 import (
+	"bytes"
+	"html/template"
+	"io/ioutil"
 	"log"
+	"os"
 )
 
 func buildReadme() {
-	log.Println("~~ 开始重制 README.md 文档 ~~")
+	log.Println("开始，重建 README 文档")
 
 	lc := newLeetCode()
-	lc.update()
 
-	// makeREADME(lc)
+	makeReadmeFile(lc)
 
-	log.Println("~~ 重制 README.md 完成 ~~")
+	makeMyFavoriteFile(lc)
+
+	log.Println("完成，重建 README 文档")
 }
 
-// func makeREADME(lc *leetcode) {
-// 	file := "README.md"
-// 	os.Remove(file)
+func makeReadmeFile(lc *leetcode) {
+	file := "README.md"
+	os.Remove(file)
 
-// 	// 更新 README.md 的内容
-// 	template := `%s
+	var b bytes.Buffer
 
-// ## 进度
+	tmpl := template.Must(template.New("readme").Parse(readTMPL("template.markdown")))
 
-// > 统计规则：1.免费题，2.算法题，3.能用 Go 解答
+	err := tmpl.Execute(&b, lc)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// %s
-// ## 题解
+	// 保存 README.md 文件
+	write(file, string(b.Bytes()))
+}
 
-// %s
-// 以下免费的算法题，暂时不能使用 Go 解答
+func readTMPL(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
 
-// %s
-// #%s
-// `
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	head := getHead(lc)
+	return string(data)
+}
 
-// 	progressTable := lc.Algorithms.progressTable()
+func makeMyFavoriteFile(lc *leetcode) {
+	file := "Favorite.md"
+	os.Remove(file)
 
-// 	availableTable := lc.Problems.available().table()
+	var b bytes.Buffer
 
-// 	unavailList := lc.Problems.unavailable().list()
+	tmpl := template.Must(template.New("favorite").Parse(readTMPL("favorite.markdown")))
 
-// 	tail := read("README_TAIL.md")
+	err := tmpl.Execute(&b, lc)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	content := fmt.Sprintf(template, head, progressTable, availableTable, unavailList, tail)
-
-// 	// 保存 README.md 文件
-// 	err := ioutil.WriteFile(file, []byte(content), 0755)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
-// func getHead(lc *leetcode) string {
-// 	headFormat := string(read("README_HEAD.md"))
-// 	return fmt.Sprintf(headFormat, lc.Ranking, lc.Username)
-// }
+	// 保存 README.md 文件
+	write(file, string(b.Bytes()))
+}

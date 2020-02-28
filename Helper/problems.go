@@ -21,8 +21,22 @@ func (ps problems) accepted() problems {
 
 func (ps problems) available() problems {
 	res := make([]problem, 0, len(ps))
-	for _, p := range ps {
-		if !p.HasNoGoOption {
+	size := len(ps)
+	for i := size - 1; i >= 0; i-- {
+		p := ps[i]
+		if p.isAvailable() {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
+func (ps problems) favorite() problems {
+	res := make([]problem, 0, len(ps))
+	size := len(ps)
+	for i := 0; i < size; i++ {
+		p := ps[i]
+		if p.IsFavor {
 			res = append(res, p)
 		}
 	}

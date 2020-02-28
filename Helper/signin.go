@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"regexp"
 
 	"github.com/mozillazg/request"
 )
@@ -24,7 +23,7 @@ func newReq() *request.Request {
 // 登录 leetcode
 // 返回的 req 带有 cookie
 func signin() *request.Request {
-	log.Println("正在登录中...")
+	// log.Println("正在登录中...")
 	cfg := getConfig()
 
 	// 对 req 赋值
@@ -32,49 +31,48 @@ func signin() *request.Request {
 
 	// 配置request
 	req.Headers = map[string]string{
+		"Content-Type":    "application/json",
 		"Accept-Encoding": "",
-		"Referer":         "https://leetcode.com/",
+		"cookie":          cfg.Cookie,
+		"Referer":         "https://leetcode.com/accounts/login/",
+		"origin":          "https://leetcode.com",
 	}
 
 	// login
-	csrfToken, err := getCSRFToken(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Data = map[string]string{
-		"csrfmiddlewaretoken": csrfToken,
-		"login":               cfg.Username,
-		"password":            cfg.Password,
-	}
-	if err = login(req); err != nil {
-		log.Fatal(err)
-	}
+	// csrfToken := getCSRFToken(req)
 
-	log.Println("成功登录")
+	// log.Printf("csrfToken: %s", csrfToken)
+
+	// req.Data = map[string]string{
+	// 	"csrfmiddlewaretoken": csrfToken,
+	// 	"login":               cfg.Username,
+	// 	"password":            cfg.Password,
+	// 	"next":                "problems",
+	// }
+	// if err := login(req); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// log.Println("成功登录")
 
 	return req
 }
 
-func getCSRFToken(req *request.Request) (string, error) {
+func getCSRFToken(req *request.Request) string {
 	resp, err := req.Get(loginPageURL)
 	if err != nil {
-		return "", err
-	}
-	s, err := resp.Text()
-	if err != nil {
-		return "", err
+		log.Panicf("无法 Get 到 %s: %s", loginPageURL, err)
 	}
 
-	reInput := regexp.MustCompile(
-		`<input\s+[^>]*?name=['"]csrfmiddlewaretoken['"'][^>]*>`,
-	)
-	input := reInput.FindString(s)
-	reValue := regexp.MustCompile(`value=['"]([^'"]+)['"]`)
-	csrfToken := reValue.FindStringSubmatch(input)
-	if len(csrfToken) < 2 {
-		return "", err
+	cookies := resp.Cookies()
+
+	for _, ck := range cookies {
+		if ck.Name == "csrftoken" {
+			return ck.Value
+		}
 	}
-	return csrfToken[1], err
+
+	panic("无法在 Cookies 中找到 csrftoken")
 }
 
 func login(req *request.Request) error {

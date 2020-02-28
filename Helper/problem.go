@@ -34,7 +34,7 @@ func newProblem(ps problemStatus) problem {
 	return p
 }
 
-func (p problem) isAvailble() bool {
+func (p problem) isAvailable() bool {
 	if p.ID == 0 || p.IsPaid || p.HasNoGoOption {
 		return false
 	}
@@ -51,22 +51,41 @@ func (p problem) link() string {
 }
 
 func (p problem) tableLine() string {
-	res := fmt.Sprintf("|%d|", p.ID)
+	// 题号
+	res := fmt.Sprintf("|[%04d](%s)|", p.ID, p.link())
+
+	// 标题
+	t := ""
 	if p.IsAccepted {
-		res += fmt.Sprintf(`[%s](%s)|`, strings.TrimSpace(p.Title), p.Dir())
+		t = fmt.Sprintf(`[%s](%s)`, strings.TrimSpace(p.Title), p.Dir())
 	} else {
-		res += fmt.Sprintf(` * %s|`, p.Title)
+		t = fmt.Sprintf(` * %s`, p.Title)
 	}
+	if p.IsNew {
+		t += " :new: "
+	}
+	res += t + "|"
+
+	// 通过率
 	res += fmt.Sprintf("%s|", p.PassRate)
+
+	// 难度
 	res += fmt.Sprintf("%s|", p.Difficulty)
-	f := " "
+
+	// 收藏
+	f := ""
 	if p.IsFavor {
 		f = "[❤](https://leetcode.com/list/oussv5j)"
 	}
 	res += fmt.Sprintf("%s|\n", f)
+
 	return res
 }
 
 func (p problem) listLine() string {
 	return fmt.Sprintf("- [%d.%s](%s)\n", p.ID, p.Title, p.link())
+}
+
+func (p problem) didaTask(prefix string) string {
+	return fmt.Sprintf("#%s - %04d - #%s - %s - %s - %s", prefix, p.ID, p.Difficulty, p.PassRate, p.Title, p.link())
 }
